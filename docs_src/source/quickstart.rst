@@ -16,22 +16,69 @@ Write a Basic Grammar
 
 Let's write a basic grammar for a mathematical expression parser.
 
-.. code-block:: text
+.. code-block:: python
     
-    [math_expr]
-    (num | math_expr) (op (num | math_expr))*
+    from grap.core.rules import rule
+    from grap.core.common import AsciiDigit, OnceOrMore, Optional, RuleUnion
     
-    [op]
-    "+" | "-" | "*" | "/"
+    @rule
+    def main():
+        yield OnceOrMore(AsciiDigit())
+        yield Optional(whitespace())
+        yield operator()
+        yield Optional(whitespace())
+        yield OnceOrMore(AsciiDigit())
     
-    [num]
-    ASCII_DIGIT+ ("." ASCII_DIGIT+)?
+    @rule
+    def whitespace():
+        yield OnceOrMore(" ")
+    
+    @rule
+    def operator():
+        yield RuleUnion("+", "-", "*", "/")
 
-Save this document as ``math.grap``.
 
-Generate the Parser
-*******************
+Save this file as ``math_expr.py``.
 
-.. code-block:: bash
+Parse Text
+**********
+
+It is recommended to use `rich <https://pypi.org/project/rich/>`_ for
+debugging. Install it with ``python -m pip install rich``.
+
+After you have saved the gramar file you are able to parse text with it.
+Use the python REPL in the same directory as your grammar file.
+
+.. repl::
     
-    grap build
+    from grap.core import parse
+    from rich import print
+    
+    #repl:hide-output
+    from math_expr import main
+    #repl:hide
+    from grap.core.rules import rule
+    from grap.core.common import AsciiDigit, OnceOrMore, Optional, RuleUnion
+    
+    @rule
+    def main():
+        yield OnceOrMore(AsciiDigit())
+        yield Optional(whitespace())
+        yield operator()
+        yield Optional(whitespace())
+        yield OnceOrMore(AsciiDigit())
+    
+    @rule
+    def whitespace():
+        yield OnceOrMore(" ")
+    
+    @rule
+    def operator():
+        yield RuleUnion("+", "-", "*", "/")
+    
+    #repl:show
+    
+    
+    print(parse(main(), "42 - 69"))
+
+This will print a large parse tree.
