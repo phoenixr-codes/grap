@@ -2,9 +2,14 @@ from __future__ import annotations
 
 from abc import ABCMeta, abstractmethod
 from collections.abc import Callable, Generator
-from typing import Optional, TypeAlias, Union
+import sys
 
-Grammar: TypeAlias = "Generator[Union[Rule, Action], bool, None]"
+from typing import Optional, overload, TypeAlias, Union
+
+from .action import Action
+
+Grammar: TypeAlias = "Generator[Union[Rule, Action, str], str, None]"
+
 
 class Rule(metaclass = ABCMeta):
     def __init__(self, name: Optional[str] = None):
@@ -23,12 +28,31 @@ class Rule(metaclass = ABCMeta):
     def grammar(self) -> Grammar:
         ...
 
+@overload
+def rule(
+    fn: Callable[[], Grammar],
+    /, *,
+    name: None = None,
+    doc: None = None,
+) -> type[Rule]: ...
+
+@overload
+def rule(
+    fn: None = None,
+    /, *,
+    name: Optional[str] = None,
+    doc: Optional[str] = None,
+) -> Callable[[Callable[[], Grammar]], type[Rule]]: ...
+
 def rule(
     fn: Optional[Callable[[], Grammar]] = None,
     /, *,
     name: Optional[str] = None,
-    doc: Optional[str] = None,
-) -> Grammar:
+    doc: Optional[str] = None
+) -> Union[
+    type[Rule],
+    Callable[[Callable[[], Grammar]], type[Rule]],
+]:
     """
     Decorator to quickly define a rule.
     
@@ -51,20 +75,27 @@ def rule(
     Examples
     --------
     .. code-block::
+       
+       from grap.core import Grammar, rule
+       
         @rule
-        def pet() -> RuleType:
+        def pet() -> Grammar:
             yield "p"
             yield "e"
             yield "t"
     
     .. code-block::
+        
+        from grap.core import Grammar, rule
+        
         @rule(name = "dog")
-        def pet() -> RuleType:
+        def pet() -> Grammar:
             yield "d"
             yield "o"
             yield "g"
+    
     """
-    def decorator(fn: Callable[[], RuleType]) -> Rule:
+    def decorator(fn: Callable[[], Grammar]) -> type[Rule]:
         class R(Rule):
             grammar = staticmethod(fn)
         

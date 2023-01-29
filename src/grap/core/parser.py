@@ -12,28 +12,59 @@ from .errors import ParseError
 from .rules import Rule
 
 
-logger.disable(__name__)
+logger.disable("grap.core")
 
 def parse(rule: Rule, text: str) -> ParsedRule:
-    pr, pointer, consumed = _parse_rule(rule, text)
+    """
+    Parameters
+    ----------
+    rule
+        The rule to parse the text with.
+    
+    text
+        The text to parse.
+    
+    Returns
+    -------
+    The parse tree.
+    """
+    tree, pointer, consumed = _parse_rule(rule, text)
+    assert tree is not None
     assert consumed
-    assert len(text) - 1 < pointer # not all characters were consumed
-    return pr
+    if len(text) - 1 >= pointer:
+        raise ParseError(f"not all characters were consumed (expected EOF)", pointer)
+    return tree
 
 @define(kw_only = True)
 class ParsedRule:
+    """
+    Attributes
+    ----------
+    name
+        The name of the rule.
+    
+    rule
+        The parsed rule object.
+    
+    match
+        The consumed characters.
+    
+    span
+        The index of the consumed characters in the parsed text.
+    
+    parent
+        The parent rule. This is None when the rule is the root.
+    
+    inner
+        All parsed subrules.
+    
+    """
     name: str
     rule: Rule
     match: str
     span: tuple[int, int]
-    parent: Optional[ParsedRule] = None
+    parent: Optional[Rule] = None
     inner: list[Rule] = field(default = Factory(list))
-    
-    def parents(self) -> Generator[ParsedRule, None, None]:
-        p = self.parent
-        while p is not None:
-            yield p
-            p = p.parent
 
 def _parse_rule(
     rule: Rule,
@@ -41,20 +72,26 @@ def _parse_rule(
     *,
     pointer: int = 0,
     hooks: Optional[list[int]] = None,
-    parents: Optional[list[ParsedRule]] = None,
+    parents: Optional[list[Rule]] = None,
     all_optional: bool = False,
-) -> tuple[ParsedRule, int]:
+) -> tuple[Optional[ParsedRule], int, str]:
+    """
+    Returns
+    -------
+    A tuple containing the parsed rule, the new position of the
+    pointer and the consumed characters as a string.
+    """
     if hooks is None: hooks = [pointer]
     if parents is None: parents = []
     
     grammar = rule.grammar()
     
-    optional = all_optional
-    inner = []
-    consumed: Optional[bool] = None
+    optional: bool = all_optional
+    inner: list[ParsedRule] = []
     any_consumed: bool = False
+    consumed = ""
     
-    pr = partial(
+    partially_parsed_rule = partial(
         ParsedRule,
         name = rule.name,
         rule = rule,
@@ -63,11 +100,18 @@ def _parse_rule(
     )
     
     try:
+        initial = True
         while True:
             if consumed:
                 any_consumed = True
-            rule_or_action = grammar.send(consumed)
-            consumed = None
+            
+            if initial:
+                rule_or_action = next(grammar)
+            else:
+                rule_or_action = grammar.send(consumed)
+            
+            initial = False
+            consumed = ""
             
             logger.debug(f"{str(rule_or_action) = }")
             
@@ -78,7 +122,7 @@ def _parse_rule(
             elif rule_or_action == Action.NO_MATCH:
                 if not optional:
                     raise ParseError("did not match", pointer)
-                consumed = False
+                consumed = ""
             elif rule_or_action == Action.IS_MATCH:
                 logger.debug("forced consuming char")
                 try:
@@ -87,9 +131,9 @@ def _parse_rule(
                     if not optional:
                         raise ParseError("EOF reached", pointer)
                     else:
-                        consumed = False
+                        consumed = ""
                         continue
-                consumed = True
+                consumed = char
                 hooks.append(pointer)
                 pointer += 1
                 logger.debug("moved pointer by 1")
@@ -106,6 +150,8 @@ def _parse_rule(
             
             elif isinstance(rule_or_action, str):
                 char = rule_or_action
+                if len(char) != 1:
+                    raise ParseError("expected char, got {char!r}", pointer)
                 logger.debug(f"checking for character {char!r}")
                 try:
                     got = text[pointer]
@@ -113,11 +159,11 @@ def _parse_rule(
                     if not optional:
                         raise ParseError(f"expected {char!r}, got EOF", pointer)
                     else:
-                        consumed = False
+                        consumed = ""
                         continue
                 if char == got:
                     logger.debug(f"character {char!r} matches")
-                    consumed = True
+                    consumed = char
                     hooks.append(pointer)
                     pointer += 1
                     logger.debug("moved pointer by 1")
@@ -127,10 +173,10 @@ def _parse_rule(
                         raise ParseError(
                             f"expected {char!r}, got {got!r}", pointer
                         )
-                    consumed = False
+                    consumed = ""
             elif isinstance(rule_or_action, Rule):
                 logger.debug(f"parsing subrule {rule_or_action} of {rule}")
-                pr_sub, pointer, consumed = _parse_rule(
+                parsed_subrule, pointer, consumed = _parse_rule(
                     rule_or_action,
                     text,
                     pointer = pointer,
@@ -139,7 +185,8 @@ def _parse_rule(
                     all_optional = optional,
                 )
                 if consumed:
-                    inner.append(pr_sub)
+                    assert parsed_subrule is not None
+                    inner.append(parsed_subrule)
             
             else:
                 raise TypeError(
@@ -149,6 +196,13 @@ def _parse_rule(
     except StopIteration:
         pass
     
-    span = (hooks[-1], pointer - 1)
-    pr = pr(match = text[slice(*span)], span = span)
-    return pr, pointer, any_consumed
+    if any_consumed:
+        span = (hooks[-1], pointer) # - (1 if parents else 0))
+        match = text[slice(*span)]
+        parsed_rule = partially_parsed_rule(match = match, span = span)
+    else:
+        match = ""
+        parsed_rule = None
+    logger.debug(f"successfully parsed rule {rule}: {match!r}")
+    return parsed_rule, pointer, match
+    #return parsed_rule, pointer, any_consumed # when any_consumed is changed to match, there is an infinite loop

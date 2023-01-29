@@ -4,8 +4,12 @@ The equivalent regular expression would be ``\d+ *(\+|-|\*|/) *\d+``.
 """
 
 from __future__ import annotations
+
+from loguru import logger
+
 from grap.core.common import *
 from grap.core.rules import Grammar, rule
+
 
 @rule
 def main() -> Grammar:
@@ -17,7 +21,7 @@ def main() -> Grammar:
 
 @rule
 def digit() -> Grammar:
-    yield RuleUnion(
+    yield RuleUnion((
         String("0"),
         String("1"),
         String("2"),
@@ -28,7 +32,7 @@ def digit() -> Grammar:
         String("7"),
         String("8"),
         String("9"),
-    )
+    ))
 
 @rule
 def whitespace():
@@ -40,12 +44,12 @@ def number() -> Grammar:
 
 @rule
 def operator() -> Grammar:
-    yield RuleUnion(
+    yield RuleUnion((
         String("+"),
         String("-"),
         String("*"),
         String("/"),
-    )
+    ))
 
 if __name__ == "__main__":
     from argparse import ArgumentParser, FileType
@@ -56,12 +60,12 @@ if __name__ == "__main__":
     except ModuleNotFoundError:
         from warnings import warn
         warn("you may wish to installe the `rich` library for better output", RuntimeWarning)
-        #from pprint import pprint
     from grap.core.parser import parse
     
     ap = ArgumentParser()
-    ap.add_argument("-f", type = FileType("w"), default = sys.stdout)
+    ap.add_argument("-f", type = FileType("w"), default = sys.stdout, metavar = "FILE")
+    ap.add_argument("text")
     args = ap.parse_args()
     
-    print(parse(main(), "1 + 1"), file = args.f)
-    print(parse(main(), "69  *420"), file = args.f)
+    print(parse(main(), args.text), file = args.f)
+    args.f.close()

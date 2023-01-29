@@ -4,13 +4,13 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "grap"
-version = "0.1.0"
+version = "0.1.0b1"
 description = "PEG Parser for Python"
 readme = "README.md"
 requires-python = ">=3.9"
 dependencies = [
     "attrs>=22.2",
-    "loguru",
+    "loguru>=0.6",
 ]
 keywords = [
     "grammar",
@@ -33,15 +33,13 @@ docs = [
     "Sphinx>=5.0.0",
     "sphinx_copybutton",
     "sphinxcontrib-spelling",
+    "sphinxcontrib-trio",
     "sphinxemoji",
 ]
 
 [project.urls]
 "Documentation" = "https://phoenixr-codes.github.io/grap/"
 "Source Code" = "https://github.com/phoenixr-codes/grap/"
-
-#[tool.setuptools]
-#packages = ["grap"]
 
 [tool.mypy]
 disallow_untyped_defs = true

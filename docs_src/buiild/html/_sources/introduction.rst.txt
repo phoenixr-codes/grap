@@ -1,0 +1,12 @@
+************
+Introduction
+************
+
+Concept
+*******
+
+The parser takes one _rule_ as a input. Each rule has a _grammar_. A grammar is a series of rules.
+It may as well contain _actions_ or _characters_.
+
+
+
