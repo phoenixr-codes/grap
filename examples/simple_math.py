@@ -5,8 +5,6 @@ The equivalent regular expression would be ``\d+ *(\+|-|\*|/) *\d+``.
 
 from __future__ import annotations
 
-from loguru import logger
-
 from grap.core.common import *
 from grap.core.rules import Grammar, rule
 
@@ -51,21 +49,3 @@ def operator() -> Grammar:
         String("/"),
     ))
 
-if __name__ == "__main__":
-    from argparse import ArgumentParser, FileType
-    import sys
-    
-    try:
-        from rich import print
-    except ModuleNotFoundError:
-        from warnings import warn
-        warn("you may wish to installe the `rich` library for better output", RuntimeWarning)
-    from grap.core.parser import parse
-    
-    ap = ArgumentParser()
-    ap.add_argument("-f", type = FileType("w"), default = sys.stdout, metavar = "FILE")
-    ap.add_argument("text")
-    args = ap.parse_args()
-    
-    print(parse(main(), args.text), file = args.f)
-    args.f.close()

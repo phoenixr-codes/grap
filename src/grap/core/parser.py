@@ -11,8 +11,7 @@ from .action import Action
 from .errors import ParseError
 from .rules import Rule
 
-
-logger.disable("grap.core")
+logger.disable("grap.core.parser")
 
 def parse(rule: Rule, text: str) -> ParsedRule:
     """
@@ -117,7 +116,7 @@ def _parse_rule(
             
             if rule_or_action == Action.GO_BACK:
                 previous = hooks.pop()
-                logger.debug(f"pointer goes back from {pointer} to {previous}")
+                logger.info(f"pointer goes back from {pointer} to {previous}")
                 pointer = previous
             elif rule_or_action == Action.NO_MATCH:
                 if not optional:
@@ -136,7 +135,7 @@ def _parse_rule(
                 consumed = char
                 hooks.append(pointer)
                 pointer += 1
-                logger.debug("moved pointer by 1")
+                logger.info("moved pointer by 1")
             elif rule_or_action == Action.OPTIONAL:
                 optional = True
                 logger.debug("made rules optional")
@@ -162,13 +161,13 @@ def _parse_rule(
                         consumed = ""
                         continue
                 if char == got:
-                    logger.debug(f"character {char!r} matches")
+                    logger.success(f"character {char!r} matches")
                     consumed = char
                     hooks.append(pointer)
                     pointer += 1
-                    logger.debug("moved pointer by 1")
+                    logger.info("moved pointer by 1")
                 else:
-                    logger.debug(f"character {char!r} does not match {got!r}")
+                    logger.info(f"character {char!r} does not match {got!r}")
                     if not optional:
                         raise ParseError(
                             f"expected {char!r}, got {got!r}", pointer
@@ -190,19 +189,20 @@ def _parse_rule(
             
             else:
                 raise TypeError(
-                    f"invalid object {rule_or_action!r} of type "
-                    f"{type(rule_or_action)!r}"
+                    f"Invalid object {rule_or_action!r} of type "
+                    f"{type(rule_or_action)!r}. Perhaps you forgot "
+                    f"parentheses after the rule variable name?"
                 )
     except StopIteration:
         pass
     
     if any_consumed:
-        span = (hooks[-1], pointer) # - (1 if parents else 0))
+        span = (0 if not hooks else hooks[-1], pointer) # - (1 if parents else 0))
         match = text[slice(*span)]
         parsed_rule = partially_parsed_rule(match = match, span = span)
     else:
         match = ""
         parsed_rule = None
-    logger.debug(f"successfully parsed rule {rule}: {match!r}")
+    logger.success(f"successfully parsed rule {rule}: {match!r}")
     return parsed_rule, pointer, match
     #return parsed_rule, pointer, any_consumed # when any_consumed is changed to match, there is an infinite loop

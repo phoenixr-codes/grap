@@ -3,8 +3,9 @@ from __future__ import annotations
 from abc import ABCMeta, abstractmethod
 from collections.abc import Callable, Generator
 import sys
-
 from typing import Optional, overload, TypeAlias, Union
+
+from attrs import define, field
 
 from .action import Action
 
@@ -96,8 +97,12 @@ def rule(
     
     """
     def decorator(fn: Callable[[], Grammar]) -> type[Rule]:
+        @define
         class R(Rule):
-            grammar = staticmethod(fn)
+            def __attrs_post_init__(self):
+                super().__init__(name)
+            
+            grammar: Callable[[], Grammar] = field(repr=False, default=staticmethod(fn))
         
         R.__name__ = name or fn.__name__
         R.__doc__ = doc or fn.__doc__

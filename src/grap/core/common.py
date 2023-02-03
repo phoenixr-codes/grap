@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
+import string as stringlib
 
 from attrs import define, field
 
@@ -81,28 +82,128 @@ class Optional(Rule):
         yield Action.OPTIONAL
         yield self.rule
 
-@rule(name = "Any Character")
+@define
+class Chained(Rule):
+    """
+    Matches all rules in a row.
+    """
+
+    rules: list[Rule]
+    """The rules to match."""
+    name: str = field()
+    """The name of the rule."""
+
+    @name.default
+    def _(self) -> str:
+        return " -> ".join(map(str, self.rules))
+    
+    def grammar(self) -> Grammar:
+        for r in self.rules:
+            yield r
+
+@define
+class PositivePredicate(Rule):
+    """
+    Matches a rule without consuming it.
+    """
+
+    rule: Rule
+    """The rule to match."""
+    name: str = field()
+    """The name of the rule."""
+    
+    @name.default
+    def _(self) -> str:
+        return f"&{self.rule}"
+    
+    def grammar(self) -> Grammar:
+        yield self.rule
+        yield Action.GO_BACK
+
+@define
+class NegativePredicate(Rule):
+    """
+    Matches when the rule is not present without consuming it.
+    """
+
+    rule: Rule
+    """The rule to not match."""
+    name: str = field()
+    """The name of the rule."""
+
+    @name.default
+    def _(self) -> str:
+        return f"!{self.rule}"
+    
+    def grammar(self) -> Grammar:
+        yield Action.OPTIONAL
+        consumed = yield self.rule
+        yield Action.REQUIRE
+        if consumed:
+            yield Action.NO_MATCH
+            yield Action.GO_BACK
+
+@rule(name = "Any character")
 def Any() -> Grammar:
     """
     Matches any character.
     """
     yield Action.IS_MATCH
 
-@rule(name = "ASCII Digit")
+@rule
+def End() -> Grammar:
+    """
+    Matches when the end of the input is reached.
+    """
+    yield Action.OPTIONAL
+    consumed = yield Any()
+    yield Action.REQUIRE
+    if consumed:
+        yield Action.NO_MATCH
+
+@rule(name = "ASCII digit")
 def AsciiDigit() -> Grammar:
     """
     Matches any ASCII digit.
     """
-    yield RuleUnion(list(String(str(x)) for x in range(10)))
+    yield RuleUnion(list(map(String, stringlib.digits)))
+
+@rule(name = "ASCII letter")
+def AsciiLetter() -> Grammar:
+    """
+    Matches any ASCII letter.
+    """
+    yield RuleUnion(list(map(String, stringlib.ascii_letters)))
+
+@rule(name = "ASCII lowercase letter")
+def AsciiLowercase() -> Grammar:
+    """
+    Matches any ASCII lowercase letter.
+    """
+    yield RuleUnion(list(map(String, stringlib.ascii_lowercase)))
+
+@rule(name = "ASCII uppercase letter")
+def AsciiUppercase() -> Grammar:
+    """
+    Matches any ASCII uppercase letter.
+    """
+    yield RuleUnion(list(map(String, stringlib.ascii_uppercase)))
+
+@rule(name = "HEX digit")
+def HexDigit() -> Grammar:
+    """
+    Matches any hexadecimal digit.
+    """
+    yield RuleUnion(list(map(String, stringlib.hexdigits)))
 
 @define
 class String(Rule):
     """Match a string."""
     
     string: str
-    case_sensitive: bool = True
-    name: str = field()
-    
+    case_sensitive: bool = field(kw_only=True, default=True)
+    name: str = field(kw_only=True)
+
     @name.default
     def _(self) -> str:
         return repr(self.string) + ("" if self.case_sensitive else "i")
