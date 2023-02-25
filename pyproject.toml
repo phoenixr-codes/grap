@@ -33,6 +33,8 @@ docs = [
     "furo>=2022.9.15",
     "Sphinx>=5.0.0",
     "sphinx_copybutton",
+    "sphinx-argparse",
+    "sphinxcontrib-repl",
     "sphinxcontrib-spelling",
     "sphinxcontrib-trio",
     "sphinxemoji",

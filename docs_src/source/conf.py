@@ -9,7 +9,7 @@
 project = 'grap'
 copyright = '2023, phoenixR'
 author = 'phoenixR'
-release = '0.1.0b1'
+release = '0.1.0b2'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
@@ -18,6 +18,7 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",
     "sphinx.ext.todo",
+    "sphinxarg.ext",
     "sphinx_copybutton",
     "sphinxcontrib.repl",
     "sphinxcontrib_trio",

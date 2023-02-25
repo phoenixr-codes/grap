@@ -12,7 +12,7 @@ Rules
     
     [rule_name]
     /// Optional Doc-Block describing the rule.
-    (a| b)+
+    (a | b)+
     
 
 ----

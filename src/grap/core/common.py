@@ -24,7 +24,7 @@ class RuleUnion(Rule):
     def grammar(self) -> Grammar:
         yield Action.OPTIONAL
         for rule in self.rules[:-1]:
-            if (yield rule):
+            if (yield rule).match:
                 break
         else:
             yield Action.REQUIRE
@@ -46,7 +46,7 @@ class OnceOrMore(Rule):
     def grammar(self) -> Grammar:
         yield self.rule
         yield Action.OPTIONAL
-        while (yield self.rule): ...
+        while (yield self.rule).match: ...
 
 @define
 class ZeroOrMore(Rule):
@@ -63,7 +63,7 @@ class ZeroOrMore(Rule):
 
     def grammar(self) -> Grammar:
         yield Action.OPTIONAL
-        while (yield self.rule): ...
+        while (yield self.rule).match: ...
 
 @define
 class Optional(Rule):
@@ -137,9 +137,9 @@ class NegativePredicate(Rule):
     
     def grammar(self) -> Grammar:
         yield Action.OPTIONAL
-        consumed = yield self.rule
+        res = yield self.rule
         yield Action.REQUIRE
-        if consumed:
+        if res.consumed_all:
             yield Action.NO_MATCH
             yield Action.GO_BACK
 
@@ -156,9 +156,9 @@ def End() -> Grammar:
     Matches when the end of the input is reached.
     """
     yield Action.OPTIONAL
-    consumed = yield Any()
+    res = yield Any()
     yield Action.REQUIRE
-    if consumed:
+    if res.match:
         yield Action.NO_MATCH
 
 @rule(name = "ASCII digit")

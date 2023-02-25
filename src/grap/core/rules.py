@@ -58,9 +58,10 @@ def rule(
     Decorator to quickly define a rule.
     
     The function that is decorated should not take any
-    arguments. The function is converted into a staic
-    method of the newly created rule. The docstring of
-    the decorated function is assigned to the rule class.
+    arguments. The function is converted into a static
+    method of the newly created rule. The docstring and
+    the name of the decorated function are assigned to the
+    returned class.
     
     Parameters
     ----------

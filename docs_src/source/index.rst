@@ -15,6 +15,7 @@ grap - PEG Parser for Python
     quickstart
     api-core
     api-lang
+    cli
     cheatsheet
 
 .. toctree::

@@ -57,7 +57,7 @@ ap.add_argument(
 
 ap.add_argument(
     "-t", "--type",
-    help="Specify the file type of the grammar. When this is `auto` (default) the file type is assumed by its extension",
+    help="Specify the file type of the grammar. When this is `auto` (default) the file type is assumed by its extension.",
     choices=["auto", "python", "grap"],
     default="auto"
 )
@@ -68,6 +68,12 @@ ap.add_argument(
     default="main",
     metavar="NAME"
 )
+
+def _get_parser() -> ArgumentParser:
+    """
+    Used by ``sphinx-argparse``.
+    """
+    return ap
 
 def parse(with_args: Optional[list[str]] = None) -> None:
     args = ap.parse_args(with_args)

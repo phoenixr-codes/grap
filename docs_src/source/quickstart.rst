@@ -82,5 +82,15 @@ Use the python REPL in the same directory as your grammar file.
     
     print(parse(main(), "42 - 7"))
 
-This will print a large parse tree.
+This will print a large parse tree. Instead of writing a seperate script,
+you may instead use the command line interface of grap to quickly parse
+text.
+
+.. code-block:: bash
+    
+    python -m grap math_expr.py "42 - 7"
+
+This will look for a rule named ``'main'`` in the file ``math_expr.py``
+and parse the text ``"42 - 7"``. To learn more read the documentation
+of  the `CLI <cli>`_.
 

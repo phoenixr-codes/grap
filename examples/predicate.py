@@ -20,3 +20,9 @@ def comment() -> Grammar:
         Any()
     ]))
     yield String("*/")
+
+@rule
+def not_bd() -> Grammar:
+    yield NegativePredicate(String("bd"))
+    yield AsciiLowercase()
+    

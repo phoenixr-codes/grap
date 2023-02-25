@@ -34,6 +34,12 @@ def parse(rule: Rule, text: str) -> ParsedRule:
         raise ParseError(f"not all characters were consumed (expected EOF)", pointer)
     return tree
 
+@define(kw_only=True)
+class ParseResult:
+    match: str
+    consumed_any: bool
+    consumed_all: bool
+
 @define(kw_only = True)
 class ParsedRule:
     """
@@ -73,7 +79,7 @@ def _parse_rule(
     hooks: Optional[list[int]] = None,
     parents: Optional[list[Rule]] = None,
     all_optional: bool = False,
-) -> tuple[Optional[ParsedRule], int, str]:
+) -> tuple[Optional[ParsedRule], int, ParseResult]:
     """
     Returns
     -------
@@ -88,6 +94,7 @@ def _parse_rule(
     optional: bool = all_optional
     inner: list[ParsedRule] = []
     any_consumed: bool = False
+    all_consumed: bool = True
     consumed = ""
     
     partially_parsed_rule = partial(
@@ -103,11 +110,17 @@ def _parse_rule(
         while True:
             if consumed:
                 any_consumed = True
+            else:
+                all_consumed = False
             
             if initial:
                 rule_or_action = next(grammar)
             else:
-                rule_or_action = grammar.send(consumed)
+                rule_or_action = grammar.send(ParseResult(
+                    match=consumed,
+                    consumed_any=any_consumed,
+                    consumed_all=all_consumed
+                ))
             
             initial = False
             consumed = ""
@@ -135,7 +148,7 @@ def _parse_rule(
                 consumed = char
                 hooks.append(pointer)
                 pointer += 1
-                logger.info("moved pointer by 1")
+                logger.info(f"moved pointer by 1 (now at {pointer})")
             elif rule_or_action == Action.OPTIONAL:
                 optional = True
                 logger.debug("made rules optional")
@@ -165,7 +178,7 @@ def _parse_rule(
                     consumed = char
                     hooks.append(pointer)
                     pointer += 1
-                    logger.info("moved pointer by 1")
+                    logger.info(f"moved pointer by 1 (now at {pointer})")
                 else:
                     logger.info(f"character {char!r} does not match {got!r}")
                     if not optional:
@@ -175,7 +188,7 @@ def _parse_rule(
                     consumed = ""
             elif isinstance(rule_or_action, Rule):
                 logger.debug(f"parsing subrule {rule_or_action} of {rule}")
-                parsed_subrule, pointer, consumed = _parse_rule(
+                parsed_subrule, pointer, parse_result = _parse_rule(
                     rule_or_action,
                     text,
                     pointer = pointer,
@@ -183,6 +196,7 @@ def _parse_rule(
                     parents = [*parents, rule_or_action],
                     all_optional = optional,
                 )
+                consumed = parse_result.match
                 if consumed:
                     assert parsed_subrule is not None
                     inner.append(parsed_subrule)
@@ -204,5 +218,4 @@ def _parse_rule(
         match = ""
         parsed_rule = None
     logger.success(f"successfully parsed rule {rule}: {match!r}")
-    return parsed_rule, pointer, match
-    #return parsed_rule, pointer, any_consumed # when any_consumed is changed to match, there is an infinite loop
+    return parsed_rule, pointer, ParseResult(match=match, consumed_any=any_consumed, consumed_all=all_consumed)
