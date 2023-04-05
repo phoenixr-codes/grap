@@ -8,31 +8,64 @@ Cheat Sheet
 Rules
 *****
 
+===========
+``[rule]!``
+===========
+
+A normal rule will appear in the parse tree as well as its children.
+
+---
+
+===========
+``[rule]?``
+===========
+
+A silent rule will **not** appear in the parse tree and so do the children.
+
+---
+
+===========
+``[rule]:``
+===========
+
+A complacent rule will appear in the parse tree but not its children.
+
+---
+
+===========
+Style Guide
+===========
+
+The modifier (``!``, ``?`` or ``:``) is usually written underneath the
+brackets ``[]``.
+
 .. code-block:: grap
     
     [rule_name]
     /// Optional Doc-Block describing the rule.
-    (a | b)+
+    ! (a | b)+
+    > c
+    ~ d
     
-
 ----
 
 Syntax
 ******
 
-=======
-``a b``
-=======
+=========
+``a > b``
+=========
 
 ``a`` followed by ``b``.
 
 ----
 
-========
-``a, b``
-========
+=========
+``a - b``
+=========
 
 ``a`` followed by ``Seperator`` followed by ``b``. This is the same as ``a Seperator b``.
+This acts the same as ``~`` when ``Seperator`` is not defined.
 
 Examples
 ========
@@ -45,9 +78,9 @@ Examples
     [whitespace]
     " "+
 
-------------
-``"a", "b"``
-------------
+-------------
+``"a" - "b"``
+-------------
 
 * |no| ``ab``
 * |yes| ``a b``
@@ -55,12 +88,12 @@ Examples
 
 ----
 
-========
-``a; b``
-========
+=========
+``a ~ b``
+=========
 
 ``a`` optionally followed by ``Seperator`` followed by ``b``. This is the same as
-``a Seperator? b``.
+``a Seperator? b``. This acts the same as ``~`` when ``Seperator`` is not defined.
 
 Examples
 ========
@@ -68,14 +101,14 @@ Examples
 .. code-block::
     
     [Seperator]
-    whitespace
+    ? whitespace
     
     [whitespace]
-    " "+
+    ? " "+
 
-------------
-``"a"; "b"``
-------------
+-------------
+``"a" ~ "b"``
+-------------
 
 * |yes| ``ab``
 * |yes| ``a b``
@@ -157,27 +190,27 @@ Examples
 
 ----
 
-========
-``&a b``
-========
+==========
+``&a > b``
+==========
 
 ``a`` as well as ``b``.
 
 Examples
 ========
 
---------------------
-``&("X" | "Y") "X"``
---------------------
+----------------------
+``&("X" | "Y") > "X"``
+----------------------
 
 * |yes| ``X``
 * |no| ``Y``
 
 ----
 
-========
-``!a b``
-========
+==========
+``!a > b``
+==========
 
 Not ``a`` but ``b``.
 
@@ -192,9 +225,9 @@ Not ``a`` but ``b``.
 Examples
 ========
 
-------------
-``"X" "Y"*``
-------------
+--------------
+``"X" > "Y"*``
+--------------
 
 * |yes| ``X``
 * |yes| ``XY``
@@ -212,9 +245,9 @@ Examples
 Examples
 ========
 
-------------
-``"X" "Y"+``
-------------
+--------------
+``"X" > "Y"+``
+--------------
 
 * |no| ``X``
 * |yes| ``XY``
@@ -232,9 +265,9 @@ Examples
 Examples
 ========
 
-------------
-``"X" "Y"?``
-------------
+--------------
+``"X" > "Y"?``
+--------------
 
 * |yes| ``X``
 * |yes| ``XY``

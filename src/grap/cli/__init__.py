@@ -13,7 +13,7 @@ from typing import Optional
 
 from grap import core, lang
 from loguru import logger
-from rich import print as rprint
+
 
 ap = ArgumentParser(prog="grap")
 
@@ -64,7 +64,7 @@ ap.add_argument(
 
 ap.add_argument(
     "-r", "--rule",
-    help="The name of the rule to parse the text with.",
+    help="The name of the rule to parse the text with. Defaults to 'main'.",
     default="main",
     metavar="NAME"
 )
@@ -78,7 +78,8 @@ def _get_parser() -> ArgumentParser:
 def parse(with_args: Optional[list[str]] = None) -> None:
     args = ap.parse_args(with_args)
     
-    assert args.verbose < 7, "verbose level to high"
+    if args.verbose > 6:
+        raise RuntimeError(f"verbose level to high ({args.verbose} > 6)")
 
     logger.remove()
     logger.enable("grap.core.parser")
@@ -121,6 +122,13 @@ def parse(with_args: Optional[list[str]] = None) -> None:
     if args.raw:
         print(result)
     else:
+        try:
+            from rich import print as rprint
+        except ModuleNotFoundError as exc:
+            raise ModuleNotFoundError(
+                "`rich` is not installed; install it with `pip install "
+                "grap[dev]` or `pip install rich`"
+            ) from exc
         rprint(result)
 
     sys.exit(0)

@@ -9,7 +9,7 @@ from loguru import logger
 
 from .action import Action
 from .errors import ParseError
-from .rules import Rule
+from .rules import ParsedRule, ParseResult, Rule
 
 logger.disable("grap.core.parser")
 
@@ -34,42 +34,7 @@ def parse(rule: Rule, text: str) -> ParsedRule:
         raise ParseError(f"not all characters were consumed (expected EOF)", pointer)
     return tree
 
-@define(kw_only=True)
-class ParseResult:
-    match: str
-    consumed_any: bool
-    consumed_all: bool
 
-@define(kw_only = True)
-class ParsedRule:
-    """
-    Attributes
-    ----------
-    name
-        The name of the rule.
-    
-    rule
-        The parsed rule object.
-    
-    match
-        The consumed characters.
-    
-    span
-        The index of the consumed characters in the parsed text.
-    
-    parent
-        The parent rule. This is None when the rule is the root.
-    
-    inner
-        All parsed subrules.
-    
-    """
-    name: str
-    rule: Rule
-    match: str
-    span: tuple[int, int]
-    parent: Optional[Rule] = None
-    inner: list[Rule] = field(default = Factory(list))
 
 def _parse_rule(
     rule: Rule,
@@ -197,15 +162,17 @@ def _parse_rule(
                     all_optional = optional,
                 )
                 consumed = parse_result.match
-                if consumed:
+                if consumed and not rule_or_action.silent_children:
                     assert parsed_subrule is not None
-                    inner.append(parsed_subrule)
+                    if not parsed_subrule.rule.silent:
+                        inner.append(parsed_subrule)
             
             else:
                 raise TypeError(
                     f"Invalid object {rule_or_action!r} of type "
                     f"{type(rule_or_action)!r}. Perhaps you forgot "
-                    f"parentheses after the rule variable name?"
+                    f"parentheses after the rule variable name?\n"
+                    "`yield foo` -> `yield foo()`"
                 )
     except StopIteration:
         pass

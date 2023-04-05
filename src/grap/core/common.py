@@ -16,6 +16,8 @@ class RuleUnion(Rule):
     """The rules to match."""
     name: str = field()
     """The name of the rule."""
+    silent: bool = field(init=False, default=False)
+    silent_children: bool = field(init=False, default=False)
     
     @name.default
     def _(self) -> str:
@@ -38,6 +40,8 @@ class OnceOrMore(Rule):
     """The rule to match."""
     name: str = field()
     """The name of the rule."""
+    silent: bool = field(init=False, default=False)
+    silent_children: bool = field(init=False, default=False)
 
     @name.default
     def _(self) -> str:
@@ -56,6 +60,8 @@ class ZeroOrMore(Rule):
     """The rule to match."""
     name: str = field()
     """The name of the rule."""
+    silent: bool = field(init=False, default=False)
+    silent_children: bool = field(init=False, default=False)
 
     @name.default
     def _(self) -> str:
@@ -66,6 +72,30 @@ class ZeroOrMore(Rule):
         while (yield self.rule).match: ...
 
 @define
+class Repeat(Rule):
+    """Matches a rule ``n`` timrs."""
+
+    rule: Rule
+    """The rule to match."""
+    amount: int
+    """The amount of repetitions to match."""
+    name: str = field()
+    """The name of the rule."""
+    silent: bool = field(init=False, default=False)
+    silent_children: bool = field(init=False, default=False)
+
+    @name.default
+    def _(self) -> str:
+        return f"{self.rule}{{n}}"
+
+    def grammar(self) -> Grammar:
+        matches = 0
+        while matches < self.amount and (yield self.rule):
+            matches += 1
+        if matches < self.amount:
+            yield Action.NO_MATCH
+
+@define
 class Optional(Rule):
     """Optionally match a rule."""
     
@@ -73,6 +103,8 @@ class Optional(Rule):
     """The rule to match."""
     name: str = field()
     """The name of the rule."""
+    silent: bool = field(init=False, default=False)
+    silent_children: bool = field(init=False, default=False)
     
     @name.default
     def _(self) -> str:
@@ -92,6 +124,8 @@ class Chained(Rule):
     """The rules to match."""
     name: str = field()
     """The name of the rule."""
+    silent: bool = field(init=False, default=False)
+    silent_children: bool = field(init=False, default=False)
 
     @name.default
     def _(self) -> str:
@@ -111,6 +145,8 @@ class PositivePredicate(Rule):
     """The rule to match."""
     name: str = field()
     """The name of the rule."""
+    silent: bool = field(init=False, default=False)
+    silent_children: bool = field(init=False, default=False)
     
     @name.default
     def _(self) -> str:
@@ -130,6 +166,8 @@ class NegativePredicate(Rule):
     """The rule to not match."""
     name: str = field()
     """The name of the rule."""
+    silent: bool = field(init=False, default=False)
+    silent_children: bool = field(init=False, default=False)
 
     @name.default
     def _(self) -> str:
@@ -161,35 +199,35 @@ def End() -> Grammar:
     if res.match:
         yield Action.NO_MATCH
 
-@rule(name = "ASCII digit")
+@rule(name = "ASCII digit", silent_children=False)
 def AsciiDigit() -> Grammar:
     """
     Matches any ASCII digit.
     """
     yield RuleUnion(list(map(String, stringlib.digits)))
 
-@rule(name = "ASCII letter")
+@rule(name = "ASCII letter", silent_children=False)
 def AsciiLetter() -> Grammar:
     """
     Matches any ASCII letter.
     """
     yield RuleUnion(list(map(String, stringlib.ascii_letters)))
 
-@rule(name = "ASCII lowercase letter")
+@rule(name = "ASCII lowercase letter", silent_children=False)
 def AsciiLowercase() -> Grammar:
     """
     Matches any ASCII lowercase letter.
     """
     yield RuleUnion(list(map(String, stringlib.ascii_lowercase)))
 
-@rule(name = "ASCII uppercase letter")
+@rule(name = "ASCII uppercase letter", silent_children=False)
 def AsciiUppercase() -> Grammar:
     """
     Matches any ASCII uppercase letter.
     """
     yield RuleUnion(list(map(String, stringlib.ascii_uppercase)))
 
-@rule(name = "HEX digit")
+@rule(name = "HEX digit", silent_children=False)
 def HexDigit() -> Grammar:
     """
     Matches any hexadecimal digit.
@@ -201,8 +239,14 @@ class String(Rule):
     """Match a string."""
     
     string: str
+    """The string to match."""
     case_sensitive: bool = field(kw_only=True, default=True)
+    """Differs between upper and lower case."""
     name: str = field(kw_only=True)
+    """The name of the rule."""
+
+    silent: bool = field(init=False, default=False)
+    silent_children: bool = field(init=False, default=True)
 
     @name.default
     def _(self) -> str:

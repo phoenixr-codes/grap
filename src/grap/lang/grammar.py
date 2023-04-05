@@ -61,9 +61,7 @@ def singleline_comment() -> Grammar:
 @rule
 def multiline_comment() -> Grammar:
     yield String("/*")
-    yield Chained([
-        NegativePredicate()
-    ])
+    # TODO
 
 @rule
 def modifier() -> Grammar:
@@ -117,7 +115,7 @@ def number() -> Grammar:
 @rule
 def identifier() -> Grammar:
     yield OnceOrMore(
-        RuleUnion([AsciiLetter, AsciiDigit, String("_")])
+        RuleUnion([AsciiLetter(), AsciiDigit(), String("_")])
     )
 
 @rule

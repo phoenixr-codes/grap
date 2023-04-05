@@ -14,7 +14,8 @@ class Parser:
 
     @classmethod
     def from_path(cls, path: Path) -> Parser:
-        cls(path.read_text())
+        return cls(path.read_text())
     
-    def __attrs_post_init__(self):
+    def __attrs_post_init__(self) -> None:
+        # TODO
         ...

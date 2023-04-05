@@ -33,8 +33,8 @@ def digit() -> Grammar:
     ))
 
 @rule
-def whitespace():
-    yield OnceOrMore(" ")
+def whitespace() -> Grammar:
+    yield OnceOrMore(String(" "))
 
 @rule
 def number() -> Grammar:

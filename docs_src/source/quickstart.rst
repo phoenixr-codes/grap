@@ -9,7 +9,7 @@ You can install ``grap`` with ``pip``:
 
 .. code-block:: bash
     
-    python -m pip install grap
+    python -m pip install grap[dev]
 
 Write a Basic Grammar
 *********************
@@ -42,10 +42,6 @@ Save this file as ``math_expr.py``.
 
 Parse Text
 **********
-
-It is recommended to use `rich <https://pypi.org/project/rich/>`_ for
-debugging. Install it with ``python -m pip install rich``. Highlighting
-is automatically enabled when rich is installed.
 
 After you have saved the gramar file you are able to parse text with it.
 Use the python REPL in the same directory as your grammar file.

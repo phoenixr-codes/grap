@@ -10,4 +10,4 @@ from grap.core.rules import Grammar, rule
 
 @rule
 def main() -> Grammar:
-    yield Any
+    yield Any  # type: ignore

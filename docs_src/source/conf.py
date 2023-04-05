@@ -39,7 +39,7 @@ autodoc_typehints = 'description'
 autoclass_content = 'both'
 
 templates_path = ['_templates']
-exclude_patterns = []
+exclude_patterns: list[str] = []
 
 
 

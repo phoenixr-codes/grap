@@ -11,7 +11,6 @@ requires-python = ">=3.9"
 dependencies = [
     "attrs>=22.2",
     "loguru>=0.6",
-    "rich>=13.3",
 ]
 keywords = [
     "grammar",
@@ -29,6 +28,9 @@ classifiers = [
 ]
 
 [project.optional-dependencies]
+dev = [
+    "rich>=13.3",
+]
 docs = [
     "furo>=2022.9.15",
     "Sphinx>=5.0.0",
